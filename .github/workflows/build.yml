@@ -120,24 +120,24 @@ jobs:
       if: runner.os == 'Linux'
       run: bash scripts/build.sh --static
 
-    - name: Install macOS dependencies
-      if: runner.os == 'macOS'
-      run: |
-        brew install \
-          protobuf \
-          pkg-config \
-          openssl@3
-        echo "OPENSSL_DIR=$(brew --prefix openssl@3)" >> $GITHUB_ENV
-        echo "PKG_CONFIG_PATH=$(brew --prefix openssl@3)/lib/pkgconfig" >> $GITHUB_ENV
+    # - name: Install macOS dependencies
+    #   if: runner.os == 'macOS'
+    #   run: |
+    #     brew install \
+    #       protobuf \
+    #       pkg-config \
+    #       openssl@3
+    #     echo "OPENSSL_DIR=$(brew --prefix openssl@3)" >> $GITHUB_ENV
+    #     echo "PKG_CONFIG_PATH=$(brew --prefix openssl@3)/lib/pkgconfig" >> $GITHUB_ENV
 
-    - name: Install Windows dependencies
-      if: runner.os == 'Windows'
-      run: |
-        choco install -y protoc
-        choco install -y openssl
-        echo "OPENSSL_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
-        echo "PKG_CONFIG_PATH=C:/Program Files/OpenSSL-Win64/lib/pkgconfig" >> $GITHUB_ENV
-        cd scripts && npm install && cd ..
+    # - name: Install Windows dependencies
+    #   if: runner.os == 'Windows'
+    #   run: |
+    #     choco install -y protoc
+    #     choco install -y openssl
+    #     echo "OPENSSL_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
+    #     echo "PKG_CONFIG_PATH=C:/Program Files/OpenSSL-Win64/lib/pkgconfig" >> $GITHUB_ENV
+    #     cd scripts && npm install && cd ..
 
     - name: Build (Dynamic)
       if: runner.os != 'Linux' && runner.os != 'FreeBSD'
@@ -154,73 +154,73 @@ jobs:
         path: release/*
         retention-days: 1
 
-  build-freebsd:
-    name: Build FreeBSD
-    runs-on: ubuntu-latest
+  # build-freebsd:
+  #   name: Build FreeBSD
+  #   runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v4.2.2
+  #   steps:
+  #   - uses: actions/checkout@v4.2.2
 
-    - name: Build on FreeBSD
-      uses: vmactions/freebsd-vm@v1.1.5
-      with:
-        usesh: true
-        prepare: |
-          # 设置持久化的环境变量
-          echo 'export SSL_CERT_FILE=/etc/ssl/cert.pem' >> /root/.profile
-          echo 'export PATH="/usr/local/bin:$PATH"' >> /root/.profile
+  #   - name: Build on FreeBSD
+  #     uses: vmactions/freebsd-vm@v1.1.5
+  #     with:
+  #       usesh: true
+  #       prepare: |
+  #         # 设置持久化的环境变量
+  #         echo 'export SSL_CERT_FILE=/etc/ssl/cert.pem' >> /root/.profile
+  #         echo 'export PATH="/usr/local/bin:$PATH"' >> /root/.profile
 
-          # 安装基础依赖
-          pkg update
-          pkg install -y \
-            git \
-            curl \
-            node20 \
-            www/npm \
-            protobuf \
-            ca_root_nss \
-            bash \
-            gmake \
-            pkgconf \
-            openssl
+  #         # 安装基础依赖
+  #         pkg update
+  #         pkg install -y \
+  #           git \
+  #           curl \
+  #           node20 \
+  #           www/npm \
+  #           protobuf \
+  #           ca_root_nss \
+  #           bash \
+  #           gmake \
+  #           pkgconf \
+  #           openssl
 
-          export SSL_CERT_FILE=/etc/ssl/cert.pem
+  #         export SSL_CERT_FILE=/etc/ssl/cert.pem
 
-          # 克隆代码（确保在正确的目录）
-          cd /root
-          git clone $GITHUB_SERVER_URL/$GITHUB_REPOSITORY .
+  #         # 克隆代码（确保在正确的目录）
+  #         cd /root
+  #         git clone $GITHUB_SERVER_URL/$GITHUB_REPOSITORY .
 
-          # 然后再进入 scripts 目录
-          cd scripts && npm install && cd ..
+  #         # 然后再进入 scripts 目录
+  #         cd scripts && npm install && cd ..
 
-          # 安装 rustup 和 Rust
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+  #         # 安装 rustup 和 Rust
+  #         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
 
-          # 设置持久化的 Rust 环境变量
-          echo '. "$HOME/.cargo/env"' >> /root/.profile
+  #         # 设置持久化的 Rust 环境变量
+  #         echo '. "$HOME/.cargo/env"' >> /root/.profile
 
-          # 添加所需的目标支持
-          . /root/.profile
-          rustup target add x86_64-unknown-freebsd
-          rustup component add rust-src
+  #         # 添加所需的目标支持
+  #         . /root/.profile
+  #         rustup target add x86_64-unknown-freebsd
+  #         rustup component add rust-src
 
-        run: |
-          # 加载环境变量
-          . /root/.profile
+  #       run: |
+  #         # 加载环境变量
+  #         . /root/.profile
 
-          # 构建
-          echo "构建动态链接版本..."
-          /usr/local/bin/bash scripts/build.sh
+  #         # 构建
+  #         echo "构建动态链接版本..."
+  #         /usr/local/bin/bash scripts/build.sh
 
-          echo "构建静态链接版本..."
-          /usr/local/bin/bash scripts/build.sh --static
+  #         echo "构建静态链接版本..."
+  #         /usr/local/bin/bash scripts/build.sh --static
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4.5.0
-      with:
-        name: binaries-freebsd
-        path: release/*
-        retention-days: 1
+  #   - name: Upload artifacts
+  #     uses: actions/upload-artifact@v4.5.0
+  #     with:
+  #       name: binaries-freebsd
+  #       path: release/*
+  #       retention-days: 1
 
   release:
     name: Create Release
